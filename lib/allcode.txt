@@ -1,0 +1,1204 @@
+--- FILE START: ./models.dart ---
+import 'dart:convert';
+
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter/material.dart';
+
+class Ingredient {
+  final String name;
+  final IconData icon;
+
+  const Ingredient(this.name, this.icon);
+}
+
+class Recipe {
+  final String title;
+  final String imageUrl;
+  final List<String> ingredients;
+
+  const Recipe(this.title, this.imageUrl, this.ingredients);
+
+  factory Recipe.fromJson(Map<String, dynamic> json) {
+    return Recipe(
+      json['title'] as String,
+      json['imageUrl'] as String,
+      List<String>.from(json['ingredients'] as List<dynamic>),
+    );
+  }
+}
+
+// Helper to load recipes from assets/recipes.json
+Future<List<Recipe>> loadRecipesFromAsset() async {
+  final raw = await rootBundle.loadString('assets/recipes.json');
+  final data = json.decode(raw) as List<dynamic>;
+  return data.map((e) => Recipe.fromJson(e as Map<String, dynamic>)).toList();
+}
+
+// Categorized ingredients for better organization
+class IngredientCategory {
+  final String name;
+  final List<Ingredient> ingredients;
+
+  const IngredientCategory(this.name, this.ingredients);
+}
+
+const List<IngredientCategory> ingredientCategories = [
+  IngredientCategory('Proteins', [
+    Ingredient('Chicken', Icons.dining_outlined),
+    Ingredient('Lamb', Icons.restaurant_menu_outlined),
+    Ingredient('Beef', Icons.fastfood_outlined),
+    Ingredient('Fish', Icons.set_meal_outlined),
+    Ingredient('Egg', Icons.egg_alt_outlined),
+  ]),
+  IngredientCategory('Grains & Carbs', [
+    Ingredient('Rice', Icons.rice_bowl_outlined),
+    Ingredient('Pasta', Icons.ramen_dining_outlined),
+    Ingredient('Bread', Icons.lunch_dining_outlined),
+    Ingredient('Bulgur', Icons.grain_outlined),
+    Ingredient('Hummus', Icons.bakery_dining_outlined),
+  ]),
+  IngredientCategory('Vegetables', [
+    Ingredient('Tomato', Icons.local_florist_outlined),
+    Ingredient('Onion', Icons.grass_outlined),
+    Ingredient('Garlic', Icons.grass_outlined),
+    Ingredient('Broccoli', Icons.local_pizza_outlined),
+    Ingredient('Eggplant', Icons.brightness_5_outlined),
+    Ingredient('Zucchini', Icons.nature_outlined),
+    Ingredient('Cucumber', Icons.water_outlined),
+    Ingredient('Bell Pepper', Icons.emoji_nature_outlined),
+    Ingredient('Parsley', Icons.eco_outlined),
+  ]),
+  IngredientCategory('Dairy & Condiments', [
+    Ingredient('Cheese', Icons.local_pizza_outlined),
+    Ingredient('Yogurt', Icons.blender_outlined),
+    Ingredient('Olive Oil', Icons.water_drop_outlined),
+    Ingredient('Tahini', Icons.grain_outlined),
+    Ingredient('Lemon', Icons.brightness_5_outlined),
+  ]),
+  IngredientCategory('Spices & Seasonings', [
+    Ingredient('Cumin', Icons.brightness_6_outlined),
+    Ingredient('Sumac', Icons.auto_awesome_outlined),
+    Ingredient('Paprika', Icons.palette_outlined),
+    Ingredient('Mint', Icons.eco_outlined),
+  ]),
+];
+
+// Flattened list for backward compatibility
+List<Ingredient> get allIngredients {
+  return ingredientCategories
+      .expand((category) => category.ingredients)
+      .toList();
+}
+--- FILE END: ./models.dart ---
+
+--- FILE START: ./widgets/recipe_card.dart ---
+import 'package:flutter/material.dart';
+import '../models.dart';
+
+class RecipeCard extends StatelessWidget {
+  final Recipe recipe;
+  final bool isBookmarked;
+  final void Function(String) onToggleBookmark;
+
+  const RecipeCard({
+    super.key,
+    required this.recipe,
+    required this.isBookmarked,
+    required this.onToggleBookmark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Card(
+      color: colorScheme.surfaceContainerLow,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () {
+          onToggleBookmark(recipe.title);
+          // Show snackbar feedback
+          ScaffoldMessenger.of(context).clearSnackBars();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                isBookmarked
+                    ? '${recipe.title} removed from bookmarks'
+                    : '${recipe.title} saved to bookmarks',
+              ),
+              duration: const Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              flex: 3,
+              child: Image.network(
+                recipe.imageUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                    const Center(child: Icon(Icons.broken_image, size: 40)),
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      recipe.title,
+                      style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Ingredients: ${recipe.ingredients.length}',
+                      style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const Spacer(),
+                    Align(
+                      alignment: Alignment.bottomRight,
+                      child: Icon(
+                        isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                        color: colorScheme.primary,
+                        size: 24,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+--- FILE END: ./widgets/recipe_card.dart ---
+
+--- FILE START: ./widgets/app_drawer.dart ---
+import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart' show launchUrl, LaunchMode;
+
+// --- Placeholder utilities for the sake of making this file runnable ---
+
+// Placeholder for the external file 'utils/app_dialogs.dart'
+void showAboutPantryChefDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('About Pantry Chef'),
+        content: const Text('A Material 3 recipe finder app.'),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+// Placeholder for the external file 'utils/settings_bottom_sheet.dart'
+void showSettingsBottomSheet({
+  required BuildContext context,
+  required ThemeMode currentThemeMode,
+  required void Function(ThemeMode) onThemeModeChanged,
+}) {
+  showModalBottomSheet(
+    context: context,
+    builder: (BuildContext context) {
+      return Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text('Settings', style: Theme.of(context).textTheme.headlineSmall),
+            const Divider(),
+            ListTile(
+              title: const Text('Theme Mode'),
+              trailing: DropdownButton<ThemeMode>(
+                value: currentThemeMode,
+                items: const [
+                  DropdownMenuItem(
+                    value: ThemeMode.system,
+                    child: Text('System'),
+                  ),
+                  DropdownMenuItem(
+                    value: ThemeMode.light,
+                    child: Text('Light'),
+                  ),
+                  DropdownMenuItem(value: ThemeMode.dark, child: Text('Dark')),
+                ],
+                onChanged: (ThemeMode? newValue) {
+                  if (newValue != null) {
+                    onThemeModeChanged(newValue);
+                    Navigator.of(context).pop();
+                  }
+                },
+              ),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
+// --------------------------------------------------------------------
+
+/// Custom drawer widget with credits, about, and settings
+class AppDrawer extends StatelessWidget {
+  final ThemeMode currentThemeMode;
+  final void Function(ThemeMode) onThemeModeChanged;
+
+  const AppDrawer({
+    super.key,
+    required this.currentThemeMode,
+    required this.onThemeModeChanged,
+  });
+
+  void _launchUrl(String urlString) {
+    launchUrl(Uri.parse(urlString), mode: LaunchMode.externalApplication);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Drawer(
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // --- FIX IS HERE: Custom Drawer Header for Material 3 look ---
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16.0, 32.0, 16.0, 16.0),
+              child: Text(
+                'Pantry Chef',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  // Using the primary color for a vibrant M3 look
+                  color: colorScheme.primary,
+                ),
+              ),
+            ),
+            // --- END FIX ---
+
+            // The rest of the original content goes into a flexible area
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero, // Remove ListView default padding
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          'Credits',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '52330567 Joseph Abou Antoun\n52331136 Zeina Al Homsi',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        const SizedBox(height: 4),
+                        InkWell(
+                          onTap: () => _launchUrl(
+                            'https://github.com/JosephDoesLinux/pantry-chef',
+                          ),
+                          child: Text(
+                            'github.com/JosephDoesLinux/pantry-chef',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: colorScheme.primary,
+                                  decoration: TextDecoration.underline,
+                                ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 16),
+                  ListTile(
+                    leading: const Icon(Icons.info_outline),
+                    title: const Text('About'),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      showAboutPantryChefDialog(context);
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.settings_outlined),
+                    title: const Text('Settings'),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      showSettingsBottomSheet(
+                        context: context,
+                        currentThemeMode: currentThemeMode,
+                        onThemeModeChanged: onThemeModeChanged,
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+--- FILE END: ./widgets/app_drawer.dart ---
+
+--- FILE START: ./widgets/recipe_card_with_bookmark.dart ---
+import 'package:flutter/material.dart';
+
+import '../models.dart';
+
+/// Recipe card widget with bookmark functionality
+class RecipeCardWithBookmark extends StatelessWidget {
+  final Recipe recipe;
+  final bool isBookmarked;
+  final void Function(String) onToggleBookmark;
+
+  const RecipeCardWithBookmark({
+    super.key,
+    required this.recipe,
+    required this.isBookmarked,
+    required this.onToggleBookmark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Card(
+      color: colorScheme.surfaceContainerLow,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Tapped on ${recipe.title}')));
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              flex: 3,
+              child: Image.network(
+                recipe.imageUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                    const Center(child: Icon(Icons.broken_image, size: 40)),
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      recipe.title,
+                      style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Ingredients: ${recipe.ingredients.length}',
+                      style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const Spacer(),
+                    Align(
+                      alignment: Alignment.bottomRight,
+                      child: GestureDetector(
+                        onTap: () {
+                          onToggleBookmark(recipe.title);
+                        },
+                        child: Icon(
+                          isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                          color: colorScheme.primary,
+                          size: 24,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+--- FILE END: ./widgets/recipe_card_with_bookmark.dart ---
+
+--- FILE START: ./screens/ingredient_selector.dart ---
+import 'package:flutter/material.dart';
+import '../models.dart';
+
+class IngredientSelectorScreen extends StatefulWidget {
+  final Set<String> selectedIngredients;
+  final Function(String) onIngredientToggled;
+  final VoidCallback onNavigateToRecipes;
+  final VoidCallback? onHelpPressed;
+
+  const IngredientSelectorScreen({
+    super.key,
+    required this.selectedIngredients,
+    required this.onIngredientToggled,
+    required this.onNavigateToRecipes,
+    this.onHelpPressed,
+  });
+
+  @override
+  State<IngredientSelectorScreen> createState() =>
+      _IngredientSelectorScreenState();
+}
+
+class _IngredientSelectorScreenState extends State<IngredientSelectorScreen> {
+  late TextEditingController _searchController;
+  String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.toLowerCase();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<IngredientCategory> _getFilteredCategories() {
+    if (_searchQuery.isEmpty) {
+      return ingredientCategories;
+    }
+
+    return ingredientCategories
+        .map((category) {
+          final filteredIngredients = category.ingredients
+              .where(
+                (ingredient) =>
+                    ingredient.name.toLowerCase().contains(_searchQuery),
+              )
+              .toList();
+          return IngredientCategory(category.name, filteredIngredients);
+        })
+        .where((category) => category.ingredients.isNotEmpty)
+        .toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        CustomScrollView(
+          slivers: [
+            SliverAppBar(
+              pinned: true,
+              floating: false,
+              expandedHeight: 110,
+              centerTitle: false,
+              backgroundColor: Theme.of(
+                context,
+              ).colorScheme.surfaceContainerHigh,
+              flexibleSpace: FlexibleSpaceBar(
+                titlePadding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
+                ),
+                title: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Pantry',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${widget.selectedIngredients.length} Items Selected',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: SearchBar(
+                  controller: _searchController,
+                  hintText: 'Search or add ingredients...',
+                  leading: const Icon(Icons.search),
+                  onTap: () {},
+                ),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 16.0),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ..._getFilteredCategories().map((category) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            category.name,
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                          ),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 10.0,
+                            runSpacing: 10.0,
+                            children: category.ingredients.map((ingredient) {
+                              final isSelected = widget.selectedIngredients
+                                  .contains(ingredient.name);
+                              return FilterChip(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(24.0),
+                                ),
+                                label: Text(ingredient.name),
+                                avatar: Icon(ingredient.icon),
+                                selected: isSelected,
+                                onSelected: (bool selected) {
+                                  widget.onIngredientToggled(ingredient.name);
+                                },
+                                selectedColor: Theme.of(
+                                  context,
+                                ).colorScheme.secondaryContainer,
+                                labelStyle: TextStyle(
+                                  color: isSelected
+                                      ? Theme.of(
+                                          context,
+                                        ).colorScheme.onSecondaryContainer
+                                      : Theme.of(context).colorScheme.onSurface,
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                          const SizedBox(height: 24),
+                        ],
+                      );
+                    }).toList(),
+                    const SizedBox(height: 80),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        Positioned(
+          bottom: 24,
+          left: 0,
+          right: 0,
+          child: Center(
+            child: FilledButton.icon(
+              onPressed: widget.selectedIngredients.isEmpty
+                  ? null
+                  : widget.onNavigateToRecipes,
+              icon: const Icon(Icons.search),
+              label: const Text('Find Recipes', style: TextStyle(fontSize: 16)),
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 40,
+                  vertical: 16,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+--- FILE END: ./screens/ingredient_selector.dart ---
+
+--- FILE START: ./screens/recipe_results.dart ---
+import 'package:flutter/material.dart';
+import '../models.dart';
+import '../widgets/recipe_card.dart';
+
+class RecipeResultsScreen extends StatelessWidget {
+  final Set<String> selectedIngredients;
+  final List<Recipe> loadedRecipes;
+  final Set<String> bookmarkedRecipeTitles;
+  final void Function(String) onToggleBookmark;
+  final VoidCallback? onHelpPressed;
+
+  const RecipeResultsScreen({
+    super.key,
+    required this.selectedIngredients,
+    required this.loadedRecipes,
+    required this.bookmarkedRecipeTitles,
+    required this.onToggleBookmark,
+    this.onHelpPressed,
+  });
+
+  List<Recipe> _getFilteredRecipes() {
+    if (selectedIngredients.isEmpty) return loadedRecipes;
+
+    return loadedRecipes.where((recipe) {
+      return selectedIngredients.every(
+        (ingredient) => recipe.ingredients.contains(ingredient),
+      );
+    }).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final filteredRecipes = _getFilteredRecipes();
+
+    return CustomScrollView(
+      slivers: [
+        SliverAppBar(
+          pinned: true,
+          floating: false,
+          expandedHeight: 110,
+          centerTitle: false,
+          backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+          flexibleSpace: FlexibleSpaceBar(
+            titlePadding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
+            title: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Recipes', style: Theme.of(context).textTheme.titleLarge),
+                const SizedBox(height: 2),
+                Text(
+                  '${filteredRecipes.length} Available Recipes',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(12.0, 16.0, 12.0, 12.0),
+          sliver: filteredRecipes.isEmpty
+              ? SliverFillRemaining(
+                  child: Center(
+                    child: Text(
+                      'No recipes found for your selected ingredients.',
+                      style: Theme.of(context).textTheme.titleMedium,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                )
+              : SliverGrid(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12.0,
+                    mainAxisSpacing: 12.0,
+                    childAspectRatio: 0.7,
+                  ),
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final recipe = filteredRecipes[index];
+                    return RecipeCard(
+                      recipe: recipe,
+                      isBookmarked: bookmarkedRecipeTitles.contains(
+                        recipe.title,
+                      ),
+                      onToggleBookmark: onToggleBookmark,
+                    );
+                  }, childCount: filteredRecipes.length),
+                ),
+        ),
+      ],
+    );
+  }
+}
+--- FILE END: ./screens/recipe_results.dart ---
+
+--- FILE START: ./screens/bookmarks_screen.dart ---
+import 'package:flutter/material.dart';
+
+import '../models.dart';
+import '../widgets/recipe_card_with_bookmark.dart';
+
+/// Bookmarks screen showing all saved recipes
+class BookmarksScreen extends StatelessWidget {
+  final List<Recipe> loadedRecipes;
+  final Set<String> bookmarkedRecipeTitles;
+  final void Function(String) onToggleBookmark;
+  final VoidCallback? onHelpPressed;
+
+  const BookmarksScreen({
+    super.key,
+    required this.loadedRecipes,
+    required this.bookmarkedRecipeTitles,
+    required this.onToggleBookmark,
+    this.onHelpPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bookmarkedRecipes = loadedRecipes
+        .where((recipe) => bookmarkedRecipeTitles.contains(recipe.title))
+        .toList();
+
+    return CustomScrollView(
+      slivers: [
+        SliverAppBar(
+          pinned: true,
+          floating: false,
+          expandedHeight: 110,
+          centerTitle: false,
+          backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+          flexibleSpace: FlexibleSpaceBar(
+            titlePadding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
+            title: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Bookmarks',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${bookmarkedRecipes.length} Items Bookmarked',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(12.0, 16.0, 12.0, 12.0),
+          sliver: bookmarkedRecipes.isEmpty
+              ? SliverFillRemaining(
+                  child: Center(
+                    child: Text(
+                      'No bookmarked recipes yet.\nTap the bookmark icon on recipes to save them!',
+                      style: Theme.of(context).textTheme.titleMedium,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                )
+              : SliverGrid(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12.0,
+                    mainAxisSpacing: 12.0,
+                    childAspectRatio: 0.7,
+                  ),
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    return RecipeCardWithBookmark(
+                      recipe: bookmarkedRecipes[index],
+                      isBookmarked: true,
+                      onToggleBookmark: onToggleBookmark,
+                    );
+                  }, childCount: bookmarkedRecipes.length),
+                ),
+        ),
+      ],
+    );
+  }
+}
+--- FILE END: ./screens/bookmarks_screen.dart ---
+
+--- FILE START: ./screens/main_scaffold.dart ---
+import 'package:flutter/material.dart';
+
+import '../models.dart';
+import '../screens/bookmarks_screen.dart';
+import '../screens/ingredient_selector.dart';
+import '../screens/recipe_results.dart';
+import '../utils/app_dialogs.dart';
+import '../widgets/app_drawer.dart';
+
+/// Main scaffold widget that manages the navigation and state
+class MainScaffold extends StatefulWidget {
+  final List<Recipe> recipes;
+  final void Function(ThemeMode) onThemeModeChanged;
+  final ThemeMode currentThemeMode;
+
+  const MainScaffold({
+    super.key,
+    required this.recipes,
+    required this.onThemeModeChanged,
+    required this.currentThemeMode,
+  });
+
+  @override
+  State<MainScaffold> createState() => _MainScaffoldState();
+}
+
+class _MainScaffoldState extends State<MainScaffold> {
+  int _selectedIndex = 0;
+  final Set<String> _selectedIngredients = {};
+  final Set<String> _bookmarkedRecipeTitles = {};
+  final List<int> _navigationHistory = [];
+  late PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: _selectedIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _onIngredientToggled(String ingredientName) {
+    setState(() {
+      if (_selectedIngredients.contains(ingredientName))
+        _selectedIngredients.remove(ingredientName);
+      else
+        _selectedIngredients.add(ingredientName);
+    });
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      if (_selectedIndex != index) {
+        _navigationHistory.add(_selectedIndex);
+        _selectedIndex = index;
+        _pageController.animateToPage(
+          index,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
+
+  void _onPageChanged(int index) {
+    setState(() {
+      if (_selectedIndex != index) {
+        _navigationHistory.add(_selectedIndex);
+        _selectedIndex = index;
+      }
+    });
+  }
+
+  bool _onWillPop() {
+    if (_navigationHistory.isNotEmpty) {
+      setState(() {
+        _selectedIndex = _navigationHistory.removeLast();
+        _pageController.animateToPage(
+          _selectedIndex,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      });
+      return false; // Don't pop the route
+    }
+    return true; // Pop the route (exit app)
+  }
+
+  void _toggleBookmark(String recipeTitle) {
+    setState(() {
+      if (_bookmarkedRecipeTitles.contains(recipeTitle)) {
+        _bookmarkedRecipeTitles.remove(recipeTitle);
+      } else {
+        _bookmarkedRecipeTitles.add(recipeTitle);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    // Each screen provides its own SliverAppBar and counters now.
+
+    final widgetOptions = <Widget>[
+      IngredientSelectorScreen(
+        selectedIngredients: _selectedIngredients,
+        onIngredientToggled: _onIngredientToggled,
+        onNavigateToRecipes: () => _onItemTapped(1),
+        onHelpPressed: () => showHelpDialog(context),
+      ),
+      RecipeResultsScreen(
+        selectedIngredients: _selectedIngredients,
+        loadedRecipes: widget.recipes,
+        bookmarkedRecipeTitles: _bookmarkedRecipeTitles,
+        onToggleBookmark: _toggleBookmark,
+        onHelpPressed: () => showHelpDialog(context),
+      ),
+      BookmarksScreen(
+        loadedRecipes: widget.recipes,
+        bookmarkedRecipeTitles: _bookmarkedRecipeTitles,
+        onToggleBookmark: _toggleBookmark,
+        onHelpPressed: () => showHelpDialog(context),
+      ),
+    ];
+
+    return PopScope(
+      canPop: _navigationHistory.isEmpty,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          _onWillPop();
+        }
+      },
+      child: Scaffold(
+        drawer: AppDrawer(
+          currentThemeMode: widget.currentThemeMode,
+          onThemeModeChanged: widget.onThemeModeChanged,
+        ),
+        body: PageView(
+          controller: _pageController,
+          onPageChanged: _onPageChanged,
+          children: widgetOptions,
+        ),
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: _selectedIndex,
+          onDestinationSelected: _onItemTapped,
+          backgroundColor: colorScheme.surfaceContainerHigh,
+          destinations: const <NavigationDestination>[
+            NavigationDestination(
+              icon: Icon(Icons.kitchen_outlined),
+              selectedIcon: Icon(Icons.kitchen),
+              label: 'Pantry',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.menu_book_outlined),
+              selectedIcon: Icon(Icons.menu_book),
+              label: 'Recipes',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.bookmark_outline),
+              selectedIcon: Icon(Icons.bookmark),
+              label: 'Bookmarks',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+--- FILE END: ./screens/main_scaffold.dart ---
+
+--- FILE START: ./utils/app_dialogs.dart ---
+import 'package:flutter/material.dart';
+
+/// Shows the About Pantry Chef dialog
+void showAboutPantryChefDialog(BuildContext context) {
+  showDialog<void>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('About Pantry Chef'),
+      content: const Text(
+        'A small demo app that helps you find recipes from ingredients you have.\n\nVersion 1.0.0',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Close'),
+        ),
+      ],
+    ),
+  );
+}
+
+/// Shows the Help dialog
+void showHelpDialog(BuildContext context) {
+  showDialog<void>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('How to use Pantry Chef'),
+      content: const Text('''
+Tap ingredients to select them. Use "Find Recipes" to view recipes that contain all selected items.\n\nUse the menu (hamburger) to open Settings or About.\nSettings lets you change theme between Light, Dark, or System.
+'''),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Close'),
+        ),
+      ],
+    ),
+  );
+}
+--- FILE END: ./utils/app_dialogs.dart ---
+
+--- FILE START: ./utils/settings_bottom_sheet.dart ---
+import 'package:flutter/material.dart';
+
+/// Shows the Theme Settings bottom sheet
+void showSettingsBottomSheet({
+  required BuildContext context,
+  required ThemeMode currentThemeMode,
+  required void Function(ThemeMode) onThemeModeChanged,
+}) {
+  showModalBottomSheet<void>(
+    context: context,
+    builder: (context) {
+      return SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: const Text('Light'),
+              leading: Radio<ThemeMode>(
+                value: ThemeMode.light,
+                groupValue: currentThemeMode,
+                onChanged: (v) {
+                  if (v != null) onThemeModeChanged(v);
+                  Navigator.of(context).pop();
+                },
+              ),
+            ),
+            ListTile(
+              title: const Text('Dark'),
+              leading: Radio<ThemeMode>(
+                value: ThemeMode.dark,
+                groupValue: currentThemeMode,
+                onChanged: (v) {
+                  if (v != null) onThemeModeChanged(v);
+                  Navigator.of(context).pop();
+                },
+              ),
+            ),
+            ListTile(
+              title: const Text('Follow System'),
+              leading: Radio<ThemeMode>(
+                value: ThemeMode.system,
+                groupValue: currentThemeMode,
+                onChanged: (v) {
+                  if (v != null) onThemeModeChanged(v);
+                  Navigator.of(context).pop();
+                },
+              ),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
+--- FILE END: ./utils/settings_bottom_sheet.dart ---
+
+--- FILE START: ./main.dart ---
+// This is a complete, runnable Flutter app demonstrating a Material 3
+// recipe book interface focused on ingredient selection.
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+import 'models.dart';
+import 'screens/main_scaffold.dart';
+
+void main() {
+  // Enable predictive back gesture for Android 13+
+  SystemUiOverlayStyle.light.copyWith();
+  runApp(const PantryChefApp());
+}
+
+class PantryChefApp extends StatefulWidget {
+  const PantryChefApp({super.key});
+
+  @override
+  State<PantryChefApp> createState() => _PantryChefAppState();
+}
+
+class _PantryChefAppState extends State<PantryChefApp> {
+  ThemeMode _themeMode = ThemeMode.system;
+  List<Recipe> _recipes = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    loadRecipesFromAsset()
+        .then((list) {
+          setState(() => _recipes = list);
+        })
+        .catchError((_) {
+          // If asset load fails, fall back to some inline examples
+          setState(() {
+            _recipes = const [
+              Recipe(
+                'Fallback Toast',
+                'https://placehold.co/600x400/ccc/000?text=Fallback',
+                ['Bread', 'Cheese'],
+              ),
+            ];
+          });
+        });
+  }
+
+  void _setThemeMode(ThemeMode mode) => setState(() => _themeMode = mode);
+
+  @override
+  Widget build(BuildContext context) {
+    const Color seedColor = Color(0xFFFFC107);
+
+    return MaterialApp(
+      title: 'Pantry Chef',
+      debugShowCheckedModeBanner: false,
+      themeMode: _themeMode,
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: seedColor,
+          brightness: Brightness.light,
+        ),
+      ),
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: seedColor,
+          brightness: Brightness.dark,
+        ),
+      ),
+      home: MainScaffold(
+        recipes: _recipes,
+        onThemeModeChanged: _setThemeMode,
+        currentThemeMode: _themeMode,
+      ),
+    );
+  }
+}
+--- FILE END: ./main.dart ---
+

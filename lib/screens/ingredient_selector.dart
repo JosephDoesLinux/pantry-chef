@@ -60,55 +60,36 @@ class _IngredientSelectorScreenState extends State<IngredientSelectorScreen> {
         .toList();
   }
 
-  @override
+@override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    // 1. Define the SearchBar widget with its padding
+    final searchBarWidget = Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: SearchBar(
+        controller: _searchController,
+        hintText: 'Search or add ingredients...',
+        leading: const Icon(Icons.search),
+        onTap: () {},
+      ),
+    );
+
     return Stack(
       children: [
         CustomScrollView(
           slivers: [
-            SliverAppBar(
-              title: const Text('What\'s in your pantry?'),
-              floating: true,
-              pinned: true,
-              toolbarHeight: 80,
-              expandedHeight: 120,
-              actions: [
-                if (widget.onHelpPressed != null)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 16.0),
-                    child: IconButton(
-                      icon: const Icon(Icons.help_outline),
-                      onPressed: widget.onHelpPressed,
-                      tooltip: 'Help',
-                    ),
-                  ),
-              ],
-              flexibleSpace: FlexibleSpaceBar(
-                centerTitle: true,
-                titlePadding: const EdgeInsets.only(bottom: 16),
-                title: Text(
-                  '${widget.selectedIngredients.length} Items Selected',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: SearchBar(
-                  controller: _searchController,
-                  hintText: 'Search or add ingredients...',
-                  leading: const Icon(Icons.search),
-                  onTap: () {},
-                ),
+            // --- NEW: Use SliverPersistentHeader for the floating SearchBar ---
+            SliverPersistentHeader(
+              // `pinned: true` makes it stick after the main AppBar
+              pinned: true, 
+              delegate: _SearchBarDelegate(
+                child: searchBarWidget,
+                backgroundColor: colorScheme.background, // Use your app's main background color
               ),
             ),
             SliverPadding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 16.0),
               sliver: SliverToBoxAdapter(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -191,5 +172,45 @@ class _IngredientSelectorScreenState extends State<IngredientSelectorScreen> {
         ),
       ],
     );
+  }
+}
+
+
+// In ./screens/ingredient_selector.dart
+
+// Helper class for the persistent SearchBar
+class _SearchBarDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+  // This color is crucial to prevent content from showing through the header when scrolling
+  final Color backgroundColor; 
+
+  _SearchBarDelegate({required this.child, required this.backgroundColor});
+
+  // The SearchBar will not shrink or expand
+  @override
+  double get minExtent => maxExtent;
+
+  // The estimated height of the SearchBar + its padding (16.0 top + 16.0 bottom + SearchBar height)
+  // SearchBar typically has a height of about 48-56, so 80.0 is a safe estimate.
+  @override
+  double get maxExtent => 80.0; 
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    // The Container provides a solid background for the floating bar
+    return Container(
+      color: backgroundColor, 
+      child: child,
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _SearchBarDelegate oldDelegate) {
+    // Only rebuild if the content or background color changes
+    return oldDelegate.child != child || oldDelegate.backgroundColor != backgroundColor;
   }
 }

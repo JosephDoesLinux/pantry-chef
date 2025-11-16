@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart' show launchUrl, LaunchMode;
 
 // --- Placeholder utilities for the sake of making this file runnable ---
 
@@ -80,6 +81,10 @@ class AppDrawer extends StatelessWidget {
     required this.onThemeModeChanged,
   });
 
+  void _launchUrl(String urlString) {
+    launchUrl(Uri.parse(urlString), mode: LaunchMode.externalApplication);
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -125,13 +130,9 @@ class AppDrawer extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         InkWell(
-                          onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Opening GitHub repository...'),
-                              ),
-                            );
-                          },
+                          onTap: () => _launchUrl(
+                            'https://github.com/JosephDoesLinux/pantry-chef',
+                          ),
                           child: Text(
                             'github.com/JosephDoesLinux/pantry-chef',
                             style: Theme.of(context).textTheme.bodySmall

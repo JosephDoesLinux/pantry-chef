@@ -22,9 +22,20 @@ class RecipeCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Tapped on ${recipe.title}')));
+          onToggleBookmark(recipe.title);
+          // Show snackbar feedback
+          ScaffoldMessenger.of(context).clearSnackBars();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                isBookmarked
+                    ? '${recipe.title} removed from bookmarks'
+                    : '${recipe.title} saved to bookmarks',
+              ),
+              duration: const Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
         },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -64,15 +75,10 @@ class RecipeCard extends StatelessWidget {
                     const Spacer(),
                     Align(
                       alignment: Alignment.bottomRight,
-                      child: GestureDetector(
-                        onTap: () {
-                          onToggleBookmark(recipe.title);
-                        },
-                        child: Icon(
-                          isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                          color: colorScheme.primary,
-                          size: 24,
-                        ),
+                      child: Icon(
+                        isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                        color: colorScheme.primary,
+                        size: 24,
                       ),
                     ),
                   ],

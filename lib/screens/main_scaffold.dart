@@ -28,6 +28,26 @@ class _MainScaffoldState extends State<MainScaffold> {
   int _selectedIndex = 0;
   final Set<String> _selectedIngredients = {};
   final Set<String> _bookmarkedRecipeTitles = {};
+  final List<int> _navigationHistory = [];
+  late PageController _pageController;
+
+  final List<String> _pageTitles = const [
+  'Pantry',
+  'Recipes',
+  'Bookmarks',
+];
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: _selectedIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   void _onIngredientToggled(String ingredientName) {
     setState(() {
@@ -39,7 +59,41 @@ class _MainScaffoldState extends State<MainScaffold> {
   }
 
   void _onItemTapped(int index) {
-    setState(() => _selectedIndex = index);
+    setState(() {
+      if (_selectedIndex != index) {
+        _navigationHistory.add(_selectedIndex);
+        _selectedIndex = index;
+        _pageController.animateToPage(
+          index,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
+
+  void _onPageChanged(int index) {
+    setState(() {
+      if (_selectedIndex != index) {
+        _navigationHistory.add(_selectedIndex);
+        _selectedIndex = index;
+      }
+    });
+  }
+
+  bool _onWillPop() {
+    if (_navigationHistory.isNotEmpty) {
+      setState(() {
+        _selectedIndex = _navigationHistory.removeLast();
+        _pageController.animateToPage(
+          _selectedIndex,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      });
+      return false; // Don't pop the route
+    }
+    return true; // Pop the route (exit app)
   }
 
   void _toggleBookmark(String recipeTitle) {
@@ -55,6 +109,7 @@ class _MainScaffoldState extends State<MainScaffold> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    // Each screen provides its own SliverAppBar and counters now.
 
     final widgetOptions = <Widget>[
       IngredientSelectorScreen(
@@ -78,33 +133,67 @@ class _MainScaffoldState extends State<MainScaffold> {
       ),
     ];
 
-    return Scaffold(
-      drawer: AppDrawer(
-        currentThemeMode: widget.currentThemeMode,
-        onThemeModeChanged: widget.onThemeModeChanged,
-      ),
-      body: widgetOptions.elementAt(_selectedIndex),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: _onItemTapped,
-        backgroundColor: colorScheme.surfaceContainerHigh,
-        destinations: const <NavigationDestination>[
-          NavigationDestination(
-            icon: Icon(Icons.kitchen_outlined),
-            selectedIcon: Icon(Icons.kitchen),
-            label: 'Pantry',
+    return PopScope(
+      canPop: _navigationHistory.isEmpty,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          _onWillPop();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          // 1. Hamburger button to open the drawer
+          leading: Builder(
+            builder: (BuildContext context) {
+              return IconButton(
+                icon: const Icon(Icons.menu),
+                onPressed: () => Scaffold.of(context).openDrawer(),
+                tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
+              );
+            },
           ),
-          NavigationDestination(
-            icon: Icon(Icons.menu_book_outlined),
-            selectedIcon: Icon(Icons.menu_book),
-            label: 'Recipes',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.bookmark_outline),
-            selectedIcon: Icon(Icons.bookmark),
-            label: 'Bookmarks',
-          ),
-        ],
+          // 2. Dynamic page title
+          title: Text(_pageTitles[_selectedIndex]),
+          // 3. Help button
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.help_outline),
+              onPressed: () => showHelpDialog(context), // Invokes the utility
+            ),
+          ],
+          backgroundColor: colorScheme.surfaceContainerHigh,
+        ),
+        drawer: AppDrawer(
+          currentThemeMode: widget.currentThemeMode,
+          onThemeModeChanged: widget.onThemeModeChanged,
+        ),
+        body: PageView(
+          controller: _pageController,
+          onPageChanged: _onPageChanged,
+          children: widgetOptions,
+        ),
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: _selectedIndex,
+          onDestinationSelected: _onItemTapped,
+          backgroundColor: colorScheme.surfaceContainerHigh,
+          destinations: const <NavigationDestination>[
+            NavigationDestination(
+              icon: Icon(Icons.kitchen_outlined),
+              selectedIcon: Icon(Icons.kitchen),
+              label: 'Pantry',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.menu_book_outlined),
+              selectedIcon: Icon(Icons.menu_book),
+              label: 'Recipes',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.bookmark_outline),
+              selectedIcon: Icon(Icons.bookmark),
+              label: 'Bookmarks',
+            ),
+          ],
+        ),
       ),
     );
   }

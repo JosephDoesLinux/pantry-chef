@@ -24,42 +24,10 @@ class BookmarksScreen extends StatelessWidget {
         .where((recipe) => bookmarkedRecipeTitles.contains(recipe.title))
         .toList();
 
-    final colorScheme = Theme.of(context).colorScheme;
-
     return CustomScrollView(
       slivers: [
-        SliverAppBar(
-          title: const Text('Bookmarks'),
-          floating: true,
-          pinned: true,
-          toolbarHeight: 80,
-          expandedHeight: 120,
-          actions: [
-            if (onHelpPressed != null)
-              Padding(
-                padding: const EdgeInsets.only(right: 16.0),
-                child: IconButton(
-                  icon: const Icon(Icons.help_outline),
-                  onPressed: onHelpPressed,
-                  tooltip: 'Help',
-                ),
-              ),
-          ],
-          flexibleSpace: FlexibleSpaceBar(
-            centerTitle: true,
-            titlePadding: const EdgeInsets.only(bottom: 16),
-            title: Text(
-              '${bookmarkedRecipes.length} recipe${bookmarkedRecipes.length != 1 ? 's' : ''}',
-              style: TextStyle(
-                color: colorScheme.onSurface,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ),
         SliverPadding(
-          padding: const EdgeInsets.all(12.0),
+          padding: const EdgeInsets.fromLTRB(12.0, 16.0, 12.0, 12.0),
           sliver: bookmarkedRecipes.isEmpty
               ? SliverFillRemaining(
                   child: Center(

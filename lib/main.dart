@@ -1,11 +1,14 @@
 // This is a complete, runnable Flutter app demonstrating a Material 3
 // recipe book interface focused on ingredient selection.
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'models.dart';
 import 'screens/main_scaffold.dart';
 
 void main() {
+  // Enable predictive back gesture for Android 13+
+  SystemUiOverlayStyle.light.copyWith();
   runApp(const PantryChefApp());
 }
 
