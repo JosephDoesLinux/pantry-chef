@@ -43,8 +43,14 @@ void showSettingsBottomSheet({
               trailing: DropdownButton<ThemeMode>(
                 value: currentThemeMode,
                 items: const [
-                  DropdownMenuItem(value: ThemeMode.system, child: Text('System')),
-                  DropdownMenuItem(value: ThemeMode.light, child: Text('Light')),
+                  DropdownMenuItem(
+                    value: ThemeMode.system,
+                    child: Text('System'),
+                  ),
+                  DropdownMenuItem(
+                    value: ThemeMode.light,
+                    child: Text('Light'),
+                  ),
                   DropdownMenuItem(value: ThemeMode.dark, child: Text('Dark')),
                 ],
                 onChanged: (ThemeMode? newValue) {
@@ -62,7 +68,6 @@ void showSettingsBottomSheet({
   );
 }
 // --------------------------------------------------------------------
-
 
 /// Custom drawer widget with credits, about, and settings
 class AppDrawer extends StatelessWidget {
@@ -90,14 +95,14 @@ class AppDrawer extends StatelessWidget {
               child: Text(
                 'Pantry Chef',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      // Using the primary color for a vibrant M3 look
-                      color: colorScheme.primary,
-                    ),
+                  fontWeight: FontWeight.bold,
+                  // Using the primary color for a vibrant M3 look
+                  color: colorScheme.primary,
+                ),
               ),
             ),
             // --- END FIX ---
-            
+
             // The rest of the original content goes into a flexible area
             Expanded(
               child: ListView(
@@ -110,9 +115,8 @@ class AppDrawer extends StatelessWidget {
                       children: [
                         Text(
                           'Credits',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
                         Text(
@@ -129,11 +133,12 @@ class AppDrawer extends StatelessWidget {
                             );
                           },
                           child: Text(
-                            'github.com/JosephDoesLinux/lets_get_cookin',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: colorScheme.primary,
-                              decoration: TextDecoration.underline,
-                            ),
+                            'github.com/JosephDoesLinux/pantry-chef',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: colorScheme.primary,
+                                  decoration: TextDecoration.underline,
+                                ),
                           ),
                         ),
                       ],

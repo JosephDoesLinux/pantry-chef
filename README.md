@@ -1,37 +1,92 @@
-# Lets Get Cookin
+# Pantry Chef 👨‍🍳
 
-Material 3 Flutter app (Dart) for a simple university project. The app will show recipes and suggest what you can cook based on available ingredients.
+A modern Material 3 Flutter application that helps you discover recipes based on ingredients you have on hand.
 
-Status: initial workspace import
+## Overview
 
-Getting started:
+**Pantry Chef** is an ingredient-based recipe discovery app built with Flutter and Dart. Select the ingredients available in your pantry, and the app will suggest delicious recipes you can prepare with those ingredients.
 
-- Install Flutter and set up your environment: https://flutter.dev/docs/get-started
-- From the project root run:
+### Features
 
-  flutter pub get
-  flutter run
-
-Planned features:
-- Material 3 theming
-- Recipe listing and details
-- Ingredient-based recipe suggestions
-- Local persistence (SQLite) and optional sync
-
-Repository: https://github.com/JosephDoesLinux/lets_get_cookin
-# lets_get_cookin
-
-A new Flutter project.
+- **🔍 Ingredient Selection**: Browse and select from a comprehensive list of ingredients organized by category (Proteins, Vegetables, Fruits, Pantry Staples, etc.)
+- **🔎 Smart Search**: Filter ingredients with a searchable interface to quickly find what you're looking for
+- **📋 Recipe Discovery**: Get instant recipe suggestions based on your selected ingredients
+- **❤️ Bookmarks**: Save your favorite recipes for quick access later
+- **🎨 Material Design 3**: Beautiful, modern UI with dynamic theming
+- **💾 Local Data**: Recipes loaded from assets for offline accessibility
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+### Prerequisites
 
-A few resources to get you started if this is your first Flutter project:
+- [Flutter SDK](https://flutter.dev/docs/get-started/install)
+- Dart (included with Flutter)
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+### Installation
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/JosephDoesLinux/lets_get_cookin.git
+   cd lets_get_cookin
+   ```
+
+2. Install dependencies:
+   ```bash
+   flutter pub get
+   ```
+
+3. Run the app:
+   ```bash
+   flutter run
+   ```
+
+## Project Structure
+
+```
+lib/
+├── main.dart                    # App entry point and theme configuration
+├── models.dart                  # Data models (Recipe, Ingredient, IngredientCategory)
+├── screens/
+│   ├── main_scaffold.dart      # Main navigation scaffold
+│   ├── ingredient_selector.dart # Ingredient selection screen with search
+│   ├── recipe_results.dart      # Recipe suggestions display
+│   └── bookmarks_screen.dart    # Saved recipes screen
+├── widgets/                     # Reusable UI components
+└── utils/                       # Utility functions and helpers
+```
+
+## How It Works
+
+1. **Select Ingredients**: Browse categorized ingredients or use the search bar to find specific items
+2. **Find Recipes**: Tap "Find Recipes" to see all recipes that can be made with your selected ingredients
+3. **Save Favorites**: Bookmark recipes you love for quick access
+4. **Switch Themes**: Toggle between light, dark, and system themes
+
+## Technologies Used
+
+- **Framework**: Flutter
+- **Language**: Dart
+- **Design**: Material Design 3
+- **State Management**: StatefulWidget
+
+## Credits
+
+**Pantry Chef** was developed by:
+- [Joseph Abou Antoon](https://github.com/JosephDoesLinux)
+- [Zeina Al Homsi](https://github.com/ZeinaAlHomsi)
+
+Built as an educational project.
+
+### Built With
+
+- [Flutter](https://flutter.dev/) - UI framework
+- [Dart](https://dart.dev/) - Programming language
+- [Material Design 3](https://m3.material.io/) - Design system
+
+## Repository
+
+[GitHub - JosephDoesLinux/pantry-chef](https://github.com/JosephDoesLinux/pantry-chef)
+
+## License
+
+This project is provided as-is for educational purposes.
